@@ -7,16 +7,18 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 
-public final class Context {
-    private static final ThreadLocal<Context> storage = ThreadLocal.withInitial(Context::new);
+public final class Fluor {
+    private static final ThreadLocal<Fluor> storage = ThreadLocal.withInitial(Fluor::new);
 
-    public static Context getInstance() {
+    public static Fluor getInstance() {
         return storage.get();
     }
 
+    public static int AUTO_PURGE_LIMIT = 100;
+
     private Node caller;
     private boolean readonly;
-    Set<Loop> loops;
+    private Set<Loop> loops;
 
     //
     // Snapshot
@@ -122,14 +124,14 @@ public final class Context {
             if (backup == null) {
                 final var loops = this.loops.toArray(EMPTY_LOOP_ARRAY);
                 for (int i = 0; i < loops.length; i++) {
-                    loops[i].ready = false;
+                    loops[i].activated = false;
                 }
                 for (int i = 0; i < loops.length; i++) {
                     final var loop = loops[i];
                     registerCaller(loop, loop.runnable);
                 }
                 for (int i = 0; i < loops.length; i++) {
-                    loops[i].ready = true;
+                    loops[i].activated = true;
                 }
             }
         } finally {
@@ -168,6 +170,7 @@ public final class Context {
     void registerCallee(final Node callee) {
         if (caller != null) {
             if (callee.parents.add(caller.reference)) {
+                callee.purge();
                 caller.children.add(callee);
             }
         }

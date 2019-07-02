@@ -8,122 +8,19 @@ import java.time.Instant;
 @Test
 public class TestFibonacci {
 
-    private static class Link {
-        //<editor-fold desc="public Cell<Link> LinkMinus1">
-        private Cell<Link> linkMinus1;
+    private static class Link extends Page {
+        public final Cell<Link> linkMinus1 = cell();
+        public final Cell<Link> linkMinus2 = cell();
 
-        private static final Link DEFAULT_LINK_MINUS_1 = null;
-
-        public Link getLinkMinus1() {
-            if (linkMinus1 == null) {
-                linkMinus1 = new ValueCell<>(DEFAULT_LINK_MINUS_1);
-            }
-            return linkMinus1.get();
-        }
-
-        public Link setLinkMinus1(final Link _value_) {
-            if (linkMinus1 == null) {
-                linkMinus1 = new ValueCell<>(_value_);
-            } else {
-                linkMinus1.set(_value_);
-            }
-            return this;
-        }
-
-        public Link bindLinkMinus1(final Cell<Link> _cell_) {
-            if (linkMinus1 != null) {
-                throw new IllegalStateException("Cell already bound");
-            }
-            linkMinus1 = _cell_;
-            return this;
-        }
-
-        public Cell<Link> getLinkMinus1Property() {
-            if (linkMinus1 == null) {
-                linkMinus1 = new ValueCell<>(DEFAULT_LINK_MINUS_1);
-            }
-            return linkMinus1;
-        }
-        //</editor-fold>
-        //<editor-fold desc="public Cell<Link> LinkMinus2">
-        private Cell<Link> linkMinus2;
-
-        private static final Link DEFAULT_LINK_MINUS_2 = null;
-
-        public Link getLinkMinus2() {
-            if (linkMinus2 == null) {
-                linkMinus2 = new ValueCell<>(DEFAULT_LINK_MINUS_2);
-            }
-            return linkMinus2.get();
-        }
-
-        public Link setLinkMinus2(final Link _value_) {
-            if (linkMinus2 == null) {
-                linkMinus2 = new ValueCell<>(_value_);
-            } else {
-                linkMinus2.set(_value_);
-            }
-            return this;
-        }
-
-        public Link bindLinkMinus2(final Cell<Link> _cell_) {
-            if (linkMinus2 != null) {
-                throw new IllegalStateException("Cell already bound");
-            }
-            linkMinus2 = _cell_;
-            return this;
-        }
-
-        public Cell<Link> getLinkMinus2Property() {
-            if (linkMinus2 == null) {
-                linkMinus2 = new ValueCell<>(DEFAULT_LINK_MINUS_2);
-            }
-            return linkMinus2;
-        }
-        //</editor-fold>
-        //<editor-fold desc="public Node<Long> Value">
-        private Cell<Long> value;
-
-        private Long buildValue() {
-            final var lm1 = getLinkMinus1();
-            final var lm2 = getLinkMinus2();
+        public final Cell<Long> value = cell(() -> {
+            final var lm1 = linkMinus1.get();
+            final var lm2 = linkMinus2.get();
             if ((lm1 == null) || (lm2 == null)) {
                 return 1L;
             } else {
-                return lm1.getValue() + lm2.getValue();
+                return lm1.value.get() + lm2.value.get();
             }
-        }
-
-        public Long getValue() {
-            if (value == null) {
-                value = new SupplierCell<>(this::buildValue);
-            }
-            return value.get();
-        }
-
-        public Link setValue(final Long _value_) {
-            if (value == null) {
-                value = new SupplierCell<>(this::buildValue);
-            }
-            value.set(_value_);
-            return this;
-        }
-
-        public Link bindValue(final Cell<Long> _cell_) {
-            if (value != null) {
-                throw new IllegalStateException("Cell already bound");
-            }
-            value = _cell_;
-            return this;
-        }
-
-        public Cell<Long> getValueProperty() {
-            if (value == null) {
-                value = new SupplierCell<>(this::buildValue);
-            }
-            return value;
-        }
-        //</editor-fold>
+        });
     }
 
     private interface Calculation {
@@ -164,9 +61,10 @@ public class TestFibonacci {
             var linkMinus1 = secondLink;
             var linkMinus2 = firstLink;
             for (int i = 3; i <= CALCULATION_DEPTH; i++) {
-                var newLink = new Link()
-                        .setLinkMinus1(linkMinus1)
-                        .setLinkMinus2(linkMinus2);
+                var newLink = Chain.create(new Link())
+                        .set(o -> o.linkMinus1, linkMinus1)
+                        .set(o -> o.linkMinus2, linkMinus2)
+                        .done();
                 linkMinus2 = linkMinus1;
                 linkMinus1 = newLink;
             }
@@ -175,16 +73,16 @@ public class TestFibonacci {
 
         @Override
         public void setSeed(long seed) {
-            secondLink.setValue(seed);
+            secondLink.value.set(seed);
         }
 
         @Override
         public long getResult() {
-            return lastLink.getValue();
+            return lastLink.value.get();
         }
     }
 
-    private static final int LOOP_COUNT = 1_000;
+    private static final int LOOP_COUNT = 100_000;
 
     private void measure(String name, Calculation calculation) {
         System.out.println("Measuring [" + name + "]...");
