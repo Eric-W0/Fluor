@@ -48,15 +48,9 @@ public class Chain<T> {
         return this;
     }
 
-    public <U> Chain<T> set(final Function<T, Property<U>> function, final U value) {
+    public <U> Chain<T> set(final Function<T, Cell<U>> function, final U value) {
         checkObject();
         function.apply(object).set(value);
-        return this;
-    }
-
-    public <U> Chain<T> set(final Function<T, Cell<U>> function, final Property<U> property) {
-        checkObject();
-        function.apply(object).bind(property);
         return this;
     }
 }

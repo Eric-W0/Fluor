@@ -123,17 +123,17 @@ public class TestManual {
     /*!
         # The Components
 
-        ## The `StaticCell` object
+        ## The `ValueCellNode` object
      */
 
 //    @Test(enabled = false)
 //    public void testValueCell() {
 //
 //        /*!
-//            `StaticCell` objects are used to store values like class members or variables:
+//            `ValueCellNode` objects are used to store values like class members or variables:
 //         */
 //
-//        var vc = new StaticCell<>(12);
+//        var vc = new ValueCellNode<>(12);
 //        Assert.assertEquals((int)vc.get(), 12);
 //
 //        vc.set(43);
@@ -146,19 +146,19 @@ public class TestManual {
 //    }
 
     /*!
-        ## The `Cache` object
+        ## The `SupplierCacheNode` object
      */
 
 //    @Test(enabled = false)
 //    public void testCache() {
 //
 //        /*!
-//            `Cache` objects are "read-only formula" equivalents:
+//            `SupplierCacheNode` objects are "read-only formula" equivalents:
 //         */
 //
 //        int result;
-//        var vc = new StaticCell<>(12);
-//        var ca = new Cache<>(() -> vc.get() * 2);
+//        var vc = new ValueCellNode<>(12);
+//        var ca = new SupplierCacheNode<>(() -> vc.get() * 2);
 //
 //        result = ca.get();
 //        Assert.assertEquals(result, 24);
@@ -168,7 +168,7 @@ public class TestManual {
 //         */
 //
 //        int[] count = new int[1];
-//        var ca2 = new Cache<>(() -> {
+//        var ca2 = new SupplierCacheNode<>(() -> {
 //            count[0]++;
 //            return vc.get() * 2;
 //        });
@@ -217,7 +217,7 @@ public class TestManual {
 //            Invalidations do propagate along dependency chains:
 //         */
 //
-//        var ca3 = new Cache<>(() -> ca2.get() + 2);
+//        var ca3 = new SupplierCacheNode<>(() -> ca2.get() + 2);
 //
 //        result = ca3.get();
 //        Assert.assertEquals(result, 66);
@@ -249,18 +249,18 @@ public class TestManual {
 //    }
 
     /*!
-        ## The `DynamicCell` object
+        ## The `SupplierCellNode` object
      */
 
 //    @Test(enabled = false)
 //    public void testSupplierCell() {
 //
 //        /*!
-//            `DynamicCell` can be thought as the combination between a `Cache` and a `StaticCell`:
+//            `SupplierCellNode` can be thought as the combination between a `SupplierCacheNode` and a `ValueCellNode`:
 //         */
 //
-//        var vc = new StaticCell<>(12);
-//        var sc = new DynamicCell<>(() -> vc.get() * 2);
+//        var vc = new ValueCellNode<>(12);
+//        var sc = new SupplierCellNode<>(() -> vc.get() * 2);
 //
 //        Assert.assertFalse(sc.isCached());
 //
@@ -274,7 +274,7 @@ public class TestManual {
 //
 //        /*!
 //            The cached value takes precedence over the default calculation provided at construction
-//            time. As a consequence, the `DynamicCell` no longer has any dependency:
+//            time. As a consequence, the `SupplierCellNode` no longer has any dependency:
 //         */
 //
 //        vc.set(5);
@@ -295,7 +295,7 @@ public class TestManual {
 //    }
 
     /*!
-        ## The 'Loop' object
+        ## The 'LoopNode' object
      */
 
 //    @Test(enabled = false)
@@ -305,10 +305,10 @@ public class TestManual {
 //            A loop is essentially a runnable that is sensitive to invalidations:
 //         */
 //
-//        var vc = new StaticCell<>(12);
+//        var vc = new ValueCellNode<>(12);
 //
 //        int[] count = new int[1];
-//        var l = new Loop(() -> count[0] += vc.get());
+//        var l = new LoopNode(() -> count[0] += vc.get());
 //        Assert.assertEquals(count[0], 12);
 //
 //        vc.set(2);

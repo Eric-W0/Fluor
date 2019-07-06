@@ -104,6 +104,6 @@ public class TestFibonacci {
 
     public void testSpeed() {
         measure("Native", new NativeCalculation());
-        measure("Fluor", new FluorCalculation());
+        measure("Context", new FluorCalculation());
     }
 }

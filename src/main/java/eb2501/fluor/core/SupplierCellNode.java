@@ -2,15 +2,15 @@ package eb2501.fluor.core;
 
 import java.util.function.Supplier;
 
-final class DynamicCell<T> extends Cache<T> implements Property<T> {
+class SupplierCellNode<T> extends SupplierCacheNode<T> implements Cell<T> {
 
-    DynamicCell(final Supplier<T> supplier) {
-        super(supplier);
+    SupplierCellNode(final Page owner, final Supplier<T> supplier) {
+        super(owner, supplier);
     }
 
     @Override
     public void set(T value) {
-        fluor.ensureCanWrite();
+        owner.context.ensureCanWrite();
         this.value = value;
         cached = true;
         invalidateChildren();

@@ -1,24 +1,22 @@
 package eb2501.fluor.core;
 
-import java.util.HashSet;
-
-final class StaticCell<T> extends Node implements Property<T> {
+class ValueCellNode<T> extends Node implements Cell<T> {
     private T value;
 
-    StaticCell(T value) {
-        parents = new HashSet<>();
+    ValueCellNode(Page owner, T value) {
+        super(owner, true, false);
         this.value = value;
     }
 
     @Override
     public T get() {
-        fluor.registerCallee(this);
+        owner.context.registerCallee(this);
         return value;
     }
 
     @Override
     public void set(T value) {
-        fluor.ensureCanWrite();
+        owner.context.ensureCanWrite();
         this.value = value;
         invalidateParents();
     }

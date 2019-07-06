@@ -1,44 +1,11 @@
 package eb2501.fluor.core;
 
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public final class Loop extends Node {
-    final Runnable runnable;
-    boolean activated;
-
-    public Loop(final Runnable runnable) {
-        reference = new WeakReference<>(this);
-        children = new ArrayList<>();
-        this.runnable = runnable;
-    }
-
-    public final boolean isActivated() {
-        return activated;
-    }
-
-    public void activate() {
-        if (activated) {
-            throw new IllegalStateException("Loop is already activated");
-        }
-        fluor.registerCaller(this, runnable);
-        activated = true;
-    }
-
-    public void deactivate() {
-        if (!activated) {
-            throw new IllegalStateException("Loop is not activated");
-        }
-        invalidateChildren();
-        activated = false;
-    }
-
-    @Override
-    protected void invalidate() {
-        if (!activated) {
-            throw new LoopNotReadyException(this);
-        }
-        invalidateChildren();
-        fluor.registerLoop(this);
-    }
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Loop {
 }

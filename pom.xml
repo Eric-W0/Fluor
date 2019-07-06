@@ -18,7 +18,7 @@
     </build>
 
     <groupId>eb2501</groupId>
-    <artifactId>fluor</artifactId>
+    <artifactId>context</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <dependencies>

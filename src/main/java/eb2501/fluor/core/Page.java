@@ -1,73 +1,91 @@
 package eb2501.fluor.core;
 
+import eb2501.fluor.core.utils.Rug;
+
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class Page {
-    private final List<Loop> loops;
-    private boolean activated;
+public class Page implements Switch {
+    final Context context;
+    private LoopNode[] loops;
 
     protected Page() {
-        loops = new ArrayList<>();
+        context = Context.storage.get();
     }
 
     protected final <T> Cell<T> cell() {
-        return new BindWrapper<>(() -> new StaticCell<>(null));
+        return new ValueCellNode<>(this, null);
     }
 
     protected final <T> Cell<T> cell(final T value) {
-        return new BindWrapper<>(() -> new StaticCell<>(value));
+        return new ValueCellNode<>(this, value);
     }
 
     protected final <T> Cell<T> cell(final Supplier<T> supplier) {
-        return new BindWrapper<>(() -> new DynamicCell<>(supplier));
+        return new SupplierCellNode<>(this, supplier);
     }
 
-    protected final <T> Cache<T> cache(final Supplier<T> supplier) {
-        return new Cache<>(supplier);
+    protected final <K, V> Family<K, V> family(final Function<K, V> function) {
+        return new FamilyNode<>(this, function);
     }
 
-    protected final Loop loop(final Runnable runnable) {
-        final var result = new Loop(runnable);
-        loops.add(result);
-        if (activated) {
-            result.activate();
+    protected final <T> Supplier<T> cached(final Supplier<T> supplier) {
+        return new SupplierCacheNode<>(this, supplier);
+    }
+
+    protected final <K, V> Function<K, V> cached(final Function<K, V> function) {
+        return new FunctionCacheNode<>(this, function);
+    }
+
+    @Override
+    public boolean isActive() { return loops != null; }
+
+    private void collectLoops(final Class<?> clazz, final List<LoopNode> accu) {
+        final Class<?> parent = clazz.getSuperclass();
+        if (parent != Object.class) {
+            collectLoops(parent, accu);
         }
-        return result;
-    }
-
-    protected final boolean isActivated() { return activated; }
-
-    protected final void activate() {
-        if (activated) {
-            throw new IllegalStateException("Page has already activated");
-        }
-        loops.forEach(l -> {
-            if (!l.isActivated()) {
-                l.activate();
+        for (final Method method : clazz.getDeclaredMethods()) {
+            if (method.getAnnotation(Loop.class) == null) {
+                continue;
             }
-        });
-        activated = true;
+            if (method.getParameterCount() != 0) {
+                throw new IllegalArgumentException(
+                        String.format(
+                                "Method '%s' set as @LoopNode cannot take parameters",
+                                method
+                        )
+                );
+            }
+            final var loop = new LoopNode(this, Rug.under(() -> { method.invoke(this); }));
+            accu.add(loop);
+        }
     }
 
-    protected final void deactivate() {
-        if (!activated) {
+    private static final LoopNode[] EMPTY_LOOP_ARRAY = new LoopNode[0];
+
+    @Override
+    public void start() {
+        if (loops != null) {
+            throw new IllegalStateException("Page is already active");
+        }
+        final var accu = new ArrayList<LoopNode>();
+        collectLoops(getClass(), accu);
+        context.transaction(() -> accu.forEach(context::registerLoop), true);
+        loops = accu.toArray(EMPTY_LOOP_ARRAY);
+    }
+
+    @Override
+    public void stop() {
+        if (loops == null) {
             throw new IllegalStateException("Page has already been deactivated");
         }
-        for (int i = loops.size() - 1; i >= 0; i--) {
-            final var loop = loops.get(i);
-            if (loop.isActivated()) {
-                loop.deactivate();
-            }
+        for (int i = loops.length - 1; i >= 0; i--) {
+            loops[i].stop();
         }
-        activated = false;
-    }
-
-    protected final void deactivate(final Loop loop) {
-        if (activated) {
-            loop.deactivate();
-        }
-        loops.remove(loop);
+        loops = null;
     }
 }
